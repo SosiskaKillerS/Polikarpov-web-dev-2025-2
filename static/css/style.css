@@ -10,13 +10,11 @@ html, body {
 }
 
 body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
-    color: #333;
-    background: #e6eaf0;
 }
 
 /* Навигация */
@@ -38,36 +36,19 @@ body {
     min-height: 70px;
 }
 
-.nav-logo {
-    color: white;
-    font-size: 1.8rem;
+.navbar-brand {
     font-weight: bold;
+    font-size: 1.3rem;
 }
 
-.nav-menu {
-    display: flex;
-    list-style: none;
-    gap: 2rem;
-}
-
-.nav-link {
-    color: white;
-    text-decoration: none;
+.navbar-nav .nav-link {
     font-weight: 500;
-    padding: 0.5rem 1rem;
-    border-radius: 25px;
-    transition: all 0.3s ease;
-}
-
-.nav-link:hover {
-    background: rgba(255,255,255,0.2);
-    transform: translateY(-2px);
 }
 
 /* Основной контент */
 .main-content {
-    flex: 1 0 auto;
-    padding: 2rem 0;
+    flex: 1;
+    padding: 20px 0;
 }
 
 .container {
@@ -428,16 +409,24 @@ body {
     display: flex;
     flex-direction: column;
     margin-bottom: 1.5rem;
-    transition: box-shadow 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 .event-card:hover {
-    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.18);
+    transform: translateY(-5px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
 }
-.event-title {
+.event-card .card-title {
     font-size: 1.3rem;
     color: #667eea;
-    margin-bottom: 0.5rem;
-    font-weight: 700;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+.event-card .card-text {
+    color: #6c757d;
+    font-size: 0.9rem;
+    line-height: 1.4;
 }
 .event-date, .event-location, .event-description, .event-volunteers, .event-organizer {
     margin-bottom: 0.5rem;
@@ -490,6 +479,330 @@ body {
     margin-bottom: 10px;
 }
 .contact-input:focus {
+    border-color: #4a90e2;
+    outline: none;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(74,144,226,0.08);
+}
+
+/* Страница просмотра мероприятия */
+.event-view {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.event-view-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.event-view-header h2 {
+    margin: 0;
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.event-view-main {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.event-view-image img {
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.event-view-info p {
+    margin-bottom: 12px;
+    font-size: 1.1rem;
+    color: #495057;
+}
+
+.event-view-info strong {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.event-view-description {
+    margin-bottom: 30px;
+    padding: 25px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.event-view-description h4 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.markdown-content {
+    line-height: 1.6;
+    color: #495057;
+}
+
+.markdown-content h1, .markdown-content h2, .markdown-content h3 {
+    color: #2c3e50;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.markdown-content p {
+    margin-bottom: 1rem;
+}
+
+.markdown-content ul, .markdown-content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid #4a90e2;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Списки волонтёров */
+.event-volunteers-list, .event-volunteers-pending {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.event-volunteers-list h4, .event-volunteers-pending h4 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.event-volunteers-list ul, .event-volunteers-pending ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.event-volunteers-list li, .event-volunteers-pending li {
+    padding: 10px 0;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.event-volunteers-list li:last-child, .event-volunteers-pending li:last-child {
+    border-bottom: none;
+}
+
+.event-volunteers-pending form {
+    display: flex;
+    gap: 5px;
+}
+
+/* Регистрация пользователя */
+.event-user-registration {
+    margin-top: 30px;
+    padding: 25px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.user-reg-info {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #4a90e2;
+}
+
+.user-reg-info p {
+    margin-bottom: 8px;
+    color: #495057;
+}
+
+.user-reg-info strong {
+    color: #2c3e50;
+}
+
+/* Модальные окна */
+.modal-content {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e9ecef;
+    padding: 1.5rem;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    font-size: 1.1rem;
+    color: #495057;
+}
+
+.modal-footer {
+    border-top: 1px solid #e9ecef;
+    padding: 1.5rem;
+}
+
+/* Пагинация */
+.pagination .page-link {
+    color: #4a90e2;
+    border: 1px solid #dee2e6;
+    padding: 0.5rem 0.75rem;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #4a90e2;
+    border-color: #4a90e2;
+}
+
+.pagination .page-link:hover {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .event-view-main {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .event-view-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .event-volunteers-pending li {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .event-volunteers-pending form {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.event-card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Дополнительные стили для Bootstrap */
+.container {
+    max-width: 1200px;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.btn {
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.alert {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Стили для EasyMDE */
+.EasyMDEContainer {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.EasyMDEContainer .CodeMirror {
+    border: 1.5px solid #b0b0b0;
+    border-radius: 8px;
+}
+
+.EasyMDEContainer .editor-toolbar {
+    border: 1.5px solid #b0b0b0;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    background: #f8f9fa;
+}
+
+/* Бейджи */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+}
+
+.badge-success {
+    background-color: #28a745;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-info {
+    background-color: #17a2b8;
+}
+
+/* Кнопки действий */
+.btn-group-vertical .btn {
+    margin-bottom: 0.25rem;
+    border-radius: 0.375rem !important;
+}
+
+.btn-group-vertical .btn:last-child {
+    margin-bottom: 0;
+}
+
+/* Формы */
+.form-control {
+    border: 1.5px solid #b0b0b0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 1.08rem;
+    background: #f7f7fa;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.form-control:focus {
     border-color: #4a90e2;
     outline: none;
     background: #fff;

@@ -3,57 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Волонтёрские события{% endblock %}</title>
+    <title>{% block title %}{% endblock %} - Волонтёрские мероприятия</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
 </head>
 <body>
-    <header>
-        <nav class="navbar">
-            <div class="nav-container">
-                <a href="{{ url_for('index') }}" class="nav-logo">Волонтёрские события</a>
-                <ul class="nav-menu">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-hands-helping"></i> Волонтёрские мероприятия
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a href="{{ url_for('index') }}" class="nav-link">Главная</a>
+                        <a class="nav-link" href="{{ url_for('index') }}">Главная</a>
                     </li>
+                </ul>
+                <ul class="navbar-nav">
                     {% if current_user.is_authenticated %}
                         <li class="nav-item">
-                            <a href="{{ url_for('profile') }}" class="nav-link">Профиль</a>
+                            <a class="nav-link" href="{{ url_for('profile') }}">
+                                <i class="fas fa-user"></i> {{ current_user.first_name }} {{ current_user.last_name }}
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ url_for('logout') }}" class="nav-link">Выйти</a>
+                            <a class="nav-link" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt"></i> Выйти
+                            </a>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a href="{{ url_for('login') }}" class="nav-link">Войти</a>
+                            <a class="nav-link" href="{{ url_for('login') }}">
+                                <i class="fas fa-sign-in-alt"></i> Войти
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ url_for('register') }}" class="nav-link">Регистрация</a>
+                            <a class="nav-link" href="{{ url_for('register') }}">
+                                <i class="fas fa-user-plus"></i> Регистрация
+                            </a>
                         </li>
                     {% endif %}
                 </ul>
             </div>
-        </nav>
-    </header>
-    
+        </div>
+    </nav>
+
     <main class="main-content">
-        <div class="container">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="container mt-3">
                     {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
                             {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     {% endfor %}
-                {% endif %}
-            {% endwith %}
-            {% block content %}{% endblock %}
-        </div>
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
     </main>
 
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2025 Система волонтёрских событий.<br>Поликарпов Артём Алексеевич 231-329</p>
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">
+                {% if current_user.is_authenticated %}
+                    {{ current_user.first_name }} {{ current_user.last_name }} - {{ current_user.role.description }}
+                {% else %}
+                    Система управления волонтёрскими мероприятиями
+                {% endif %}
+            </span>
+            <br>
+            <small class="text-muted">Поликарпов Артём Алексеевич 231-329</small>
         </div>
     </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html> 

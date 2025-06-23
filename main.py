@@ -128,6 +128,34 @@ class LoginForm(FlaskForm):
     remember = BooleanField('Запомнить меня')
     submit = SubmitField('Войти')
 
+class EventForm(FlaskForm):
+    title = StringField('Название мероприятия', 
+                        validators=[DataRequired(), Length(min=3, max=255)])
+    description = StringField('Описание мероприятия', 
+                              validators=[DataRequired(), Length(min=10)])
+    event_date = StringField('Дата мероприятия (ДД.ММ.ГГГГ)', 
+                             validators=[DataRequired()])
+    location = StringField('Место проведения', 
+                           validators=[DataRequired(), Length(min=3, max=255)])
+    required_volunteers = StringField('Требуемое количество волонтёров', 
+                                      validators=[DataRequired()])
+    image = StringField('Изображение (необязательно)')
+    submit = SubmitField('Сохранить')
+
+    def validate_event_date(self, event_date):
+        try:
+            datetime.strptime(event_date.data, '%d.%m.%Y')
+        except ValueError:
+            raise ValidationError('Неверный формат даты. Используйте формат ДД.ММ.ГГГГ')
+
+    def validate_required_volunteers(self, required_volunteers):
+        try:
+            volunteers = int(required_volunteers.data)
+            if volunteers <= 0:
+                raise ValueError()
+        except ValueError:
+            raise ValidationError('Количество волонтёров должно быть положительным числом')
+
 # Функция для загрузки пользователя
 @login_manager.user_loader
 def load_user(user_id):
@@ -224,17 +252,77 @@ def test_db():
 @app.route('/event/add', methods=['GET', 'POST'])
 @role_required('admin')
 def add_event():
-    # Заглушка: будет реализовано далее
-    flash('Страница добавления мероприятия в разработке.', 'info')
-    return redirect(url_for('index'))
+    form = EventForm()
+    if form.validate_on_submit():
+        try:
+            # Парсим дату
+            event_date = datetime.strptime(form.event_date.data, '%d.%m.%Y').date()
+            
+            # Обрабатываем изображение
+            image_filename = 'default'
+            if form.image.data and form.image.data.strip():
+                image_filename = form.image.data.strip()
+            
+            # Создаем мероприятие
+            event = Event(
+                title=form.title.data,
+                description=form.description.data,
+                event_date=event_date,
+                location=form.location.data,
+                required_volunteers=int(form.required_volunteers.data),
+                image_filename=image_filename,
+                organizer_id=current_user.id
+            )
+            
+            db.session.add(event)
+            db.session.commit()
+            
+            flash(f'Мероприятие "{event.title}" успешно создано!', 'success')
+            return redirect(url_for('view_event', event_id=event.id))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash('При сохранении данных возникла ошибка. Проверьте корректность введённых данных.', 'danger')
+    
+    return render_template('event_form.html', form=form, title='Добавить мероприятие', is_edit=False)
 
 # --- Редактирование мероприятия ---
 @app.route('/event/<int:event_id>/edit', methods=['GET', 'POST'])
 @role_required('admin', 'moderator')
 def edit_event(event_id):
-    # Заглушка: будет реализовано далее
-    flash('Страница редактирования мероприятия в разработке.', 'info')
-    return redirect(url_for('index'))
+    event = Event.query.get_or_404(event_id)
+    form = EventForm()
+    
+    if request.method == 'GET':
+        form.title.data = event.title
+        form.description.data = event.description
+        form.event_date.data = event.event_date.strftime('%d.%m.%Y')
+        form.location.data = event.location
+        form.required_volunteers.data = str(event.required_volunteers)
+        form.image.data = event.image_filename
+    
+    if form.validate_on_submit():
+        try:
+            # Парсим дату
+            event_date = datetime.strptime(form.event_date.data, '%d.%m.%Y').date()
+            
+            # Обновляем данные мероприятия
+            event.title = form.title.data
+            event.description = form.description.data
+            event.event_date = event_date
+            event.location = form.location.data
+            event.required_volunteers = int(form.required_volunteers.data)
+            
+            db.session.commit()
+            
+            flash(f'Мероприятие "{event.title}" успешно обновлено!', 'success')
+            return redirect(url_for('view_event', event_id=event.id))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash('При сохранении данных возникла ошибка. Проверьте корректность введённых данных.', 'danger')
+    
+    return render_template('event_form.html', form=form, title='Редактировать мероприятие', is_edit=True, event=event)
 
 # --- Удаление мероприятия ---
 @app.route('/event/<int:event_id>/delete', methods=['POST'])
@@ -327,6 +415,12 @@ def register_for_event(event_id):
     if current_user.role.name != 'user':
         flash('Только пользователи могут регистрироваться на мероприятия.', 'danger')
         return redirect(url_for('view_event', event_id=event_id))
+    
+    # Проверяем, не является ли пользователь организатором мероприятия
+    if current_user.id == event.organizer_id:
+        flash('Организатор не может зарегистрироваться на своё мероприятие.', 'warning')
+        return redirect(url_for('view_event', event_id=event_id))
+    
     if VolunteerRegistration.query.filter_by(event_id=event_id, user_id=current_user.id).first():
         flash('Вы уже подали заявку на это мероприятие.', 'info')
         return redirect(url_for('view_event', event_id=event_id))
