@@ -13,7 +13,7 @@
     </div>
     <div class="event-view-main">
         <div class="event-view-image">
-            <img src="{{ url_for('event_image', filename=event.image_filename) }}" alt="{{ event.title }}" style="max-width: 350px; border-radius: 10px;">
+            <img src="{{ url_for('static', filename=(event.image_filename|find_image)) }}" alt="{{ event.title }}" style="max-width: 350px; border-radius: 10px;">
         </div>
         <div class="event-view-info">
             <p><strong>Дата:</strong> {{ event.event_date.strftime('%d.%m.%Y') }}</p>

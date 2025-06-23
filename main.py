@@ -308,6 +308,15 @@ def event_image(filename):
 def profile():
     return render_template('profile.html')
 
+@app.template_filter('find_image')
+def find_image(image_basename):
+    static_folder = os.path.join(app.root_path, 'static', 'images')
+    for ext in ['.jpg', '.jpeg', '.png', '.webp']:
+        candidate = image_basename + ext
+        if os.path.isfile(os.path.join(static_folder, candidate)):
+            return 'images/' + candidate
+    return 'images/no-image.png'
+
 if __name__ == '__main__':
     with app.app_context():
         # Создаем все таблицы
