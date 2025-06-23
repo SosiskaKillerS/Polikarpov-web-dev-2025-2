@@ -271,7 +271,10 @@ def view_event(event_id):
     if current_user.is_authenticated:
         user_reg = VolunteerRegistration.query.filter_by(event_id=event.id, user_id=current_user.id).first()
     # Для обработки принятия/отклонения заявки (POST)
-    if request.method == 'POST' and current_user.is_authenticated and current_user.role.name in ['admin', 'moderator']:
+    if request.method == 'POST' and current_user.is_authenticated and (
+        current_user.role.name in ['admin', 'moderator'] or 
+        current_user.id == event.organizer_id
+    ):
         reg_id = request.form.get('reg_id')
         action = request.form.get('action')
         reg = VolunteerRegistration.query.get(reg_id)

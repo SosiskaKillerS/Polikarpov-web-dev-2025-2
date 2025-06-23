@@ -28,7 +28,7 @@
         <div class="markdown-content">{{ description_html|safe }}</div>
     </div>
 
-    {% if current_user.is_authenticated and current_user.role.name in ['admin', 'moderator'] %}
+    {% if current_user.is_authenticated and (current_user.role.name in ['admin', 'moderator'] or current_user.id == event.organizer_id) %}
         <div class="event-volunteers-list">
             <h4>Зарегистрированные волонтёры (принятые заявки)</h4>
             {% if accepted_regs %}
