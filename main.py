@@ -9,7 +9,8 @@ from datetime import datetime, date
 import os
 from dotenv import load_dotenv
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField
+from flask_wtf.csrf import CSRFProtect
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField
 from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
 import bleach
 import markdown
@@ -33,6 +34,7 @@ db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 login_manager = LoginManager(app)
+csrf = CSRFProtect(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Пожалуйста, войдите, чтобы получить доступ к этой странице.'
 login_manager.login_message_category = 'info'
@@ -131,8 +133,9 @@ class LoginForm(FlaskForm):
 class EventForm(FlaskForm):
     title = StringField('Название мероприятия', 
                         validators=[DataRequired(), Length(min=3, max=255)])
-    description = StringField('Описание мероприятия', 
-                              validators=[DataRequired(), Length(min=10)])
+    description = TextAreaField('Описание мероприятия', 
+                                validators=[DataRequired(), Length(min=10)], 
+                                render_kw={'required': False, 'minlength': None})
     event_date = StringField('Дата мероприятия (ДД.ММ.ГГГГ)', 
                              validators=[DataRequired()])
     location = StringField('Место проведения', 
@@ -146,7 +149,7 @@ class EventForm(FlaskForm):
         try:
             datetime.strptime(event_date.data, '%d.%m.%Y')
         except ValueError:
-            raise ValidationError('Неверный формат даты. Используйте формат ДД.ММ.ГГГГ')
+            raise ValidationError('Неверный формат даты. Используйте формат ДД.ММ.ГГГГ (например: 25.12.2025)')
 
     def validate_required_volunteers(self, required_volunteers):
         try:
@@ -267,6 +270,12 @@ def test_db():
 @role_required('admin')
 def add_event():
     form = EventForm()
+    if request.method == 'POST':
+        print(f"Форма валидна: {form.validate()}")
+        if form.errors:
+            print(f"Ошибки формы: {form.errors}")
+        print(f"Данные формы: title={form.title.data}, date={form.event_date.data}, location={form.location.data}, volunteers={form.required_volunteers.data}")
+    
     if form.validate_on_submit():
         try:
             # Парсим дату
@@ -296,7 +305,11 @@ def add_event():
             
         except Exception as e:
             db.session.rollback()
-            flash('При сохранении данных возникла ошибка. Проверьте корректность введённых данных.', 'danger')
+            print(f"Ошибка при создании мероприятия: {str(e)}")
+            print(f"Тип ошибки: {type(e).__name__}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
+            flash(f'При сохранении данных возникла ошибка: {str(e)}. Проверьте корректность введённых данных.', 'danger')
     
     return render_template('event_form.html', form=form, title='Добавить мероприятие', is_edit=False)
 

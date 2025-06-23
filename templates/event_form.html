@@ -19,6 +19,20 @@
                     <form method="POST" enctype="multipart/form-data">
                         {{ form.hidden_tag() }}
                         
+                        <!-- Отладочная информация -->
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <h5>Ошибки валидации:</h5>
+                            <ul>
+                                {% for field, errors in form.errors.items() %}
+                                    {% for error in errors %}
+                                        <li>{{ field }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
                         <div class="form-group">
                             {{ form.title.label(class="form-label") }}
                             {{ form.title(class="form-control") }}
@@ -33,7 +47,7 @@
 
                         <div class="form-group mt-3">
                             {{ form.description.label(class="form-label") }}
-                            {{ form.description(class="form-control", id="description-editor") }}
+                            {{ form.description(id="description-editor") }}
                             {% if form.description.errors %}
                                 <div class="text-danger">
                                     {% for error in form.description.errors %}
