@@ -317,6 +317,35 @@ def find_image(image_basename):
             return 'images/' + candidate
     return 'images/no-image.png'
 
+@app.route('/event/<int:event_id>/register', methods=['POST'])
+@login_required
+def register_for_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    if current_user.role.name != 'user':
+        flash('Только пользователи могут регистрироваться на мероприятия.', 'danger')
+        return redirect(url_for('view_event', event_id=event_id))
+    if VolunteerRegistration.query.filter_by(event_id=event_id, user_id=current_user.id).first():
+        flash('Вы уже подали заявку на это мероприятие.', 'info')
+        return redirect(url_for('view_event', event_id=event_id))
+    contact_info = request.form.get('contact_info')
+    if not contact_info:
+        flash('Пожалуйста, укажите контактную информацию.', 'warning')
+        return redirect(url_for('view_event', event_id=event_id))
+    try:
+        reg = VolunteerRegistration(
+            event_id=event_id,
+            user_id=current_user.id,
+            contact_info=contact_info,
+            status='pending'
+        )
+        db.session.add(reg)
+        db.session.commit()
+        flash('Заявка успешно отправлена!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Ошибка при отправке заявки.', 'danger')
+    return redirect(url_for('view_event', event_id=event_id))
+
 if __name__ == '__main__':
     with app.app_context():
         # Создаем все таблицы

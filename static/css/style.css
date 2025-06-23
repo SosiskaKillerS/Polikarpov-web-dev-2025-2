@@ -447,4 +447,34 @@ body {
     color: #555;
     font-size: 0.98rem;
     margin-bottom: 1rem;
+}
+
+.pagination-nav {
+    text-align: center;
+    margin: 2rem 0;
+}
+.pagination {
+    display: inline-flex;
+    list-style: none;
+    padding: 0;
+    border-radius: 8px;
+    background: #f8f9fa;
+    box-shadow: 0 2px 8px rgba(102,126,234,0.08);
+}
+.pagination li {
+    margin: 0 2px;
+}
+.pagination a {
+    display: block;
+    padding: 8px 16px;
+    color: #667eea;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+.pagination li.active a,
+.pagination a:hover {
+    background: #667eea;
+    color: #fff;
 } 
