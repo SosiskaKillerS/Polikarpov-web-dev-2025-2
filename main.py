@@ -224,10 +224,24 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(login=form.login.data).first()
-        if user and bcrypt.check_password_hash(user.password_hash, form.password.data):
-            login_user(user, remember=form.remember.data)
-            next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('index'))
+        if user:
+            # Проверяем сначала как хешированный пароль
+            try:
+                if bcrypt.check_password_hash(user.password_hash, form.password.data):
+                    login_user(user, remember=form.remember.data)
+                    next_page = request.args.get('next')
+                    return redirect(next_page) if next_page else redirect(url_for('index'))
+            except ValueError:
+                # Если хеш поврежден, проверяем как обычный пароль
+                pass
+            
+            # Проверяем как обычный пароль (для admin, moderator и других пользователей с нехешированными паролями)
+            if user.password_hash == form.password.data:
+                login_user(user, remember=form.remember.data)
+                next_page = request.args.get('next')
+                return redirect(next_page) if next_page else redirect(url_for('index'))
+            
+            flash('Неверный логин или пароль. Пожалуйста, попробуйте снова.', 'danger')
         else:
             flash('Неверный логин или пароль. Пожалуйста, попробуйте снова.', 'danger')
     return render_template('login.html', title='Авторизация', form=form)
@@ -397,7 +411,13 @@ def event_image(filename):
 @app.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html')
+    # Получаем мероприятия, которые создал пользователь
+    user_events = Event.query.filter_by(organizer_id=current_user.id).order_by(Event.event_date.desc()).all()
+    
+    # Получаем заявки пользователя на мероприятия
+    user_registrations = VolunteerRegistration.query.filter_by(user_id=current_user.id).order_by(VolunteerRegistration.registration_date.desc()).all()
+    
+    return render_template('profile.html', user_events=user_events, user_registrations=user_registrations)
 
 @app.template_filter('find_image')
 def find_image(image_basename):
@@ -412,9 +432,6 @@ def find_image(image_basename):
 @login_required
 def register_for_event(event_id):
     event = Event.query.get_or_404(event_id)
-    if current_user.role.name != 'user':
-        flash('Только пользователи могут регистрироваться на мероприятия.', 'danger')
-        return redirect(url_for('view_event', event_id=event_id))
     
     # Проверяем, не является ли пользователь организатором мероприятия
     if current_user.id == event.organizer_id:

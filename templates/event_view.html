@@ -62,7 +62,7 @@
         </div>
     {% endif %}
 
-    {% if current_user.is_authenticated and current_user.role.name == 'user' and current_user.id != event.organizer_id %}
+    {% if current_user.is_authenticated and current_user.id != event.organizer_id %}
         <div class="event-user-registration">
             {% if not user_reg %}
                 {% if not is_closed %}
@@ -93,7 +93,7 @@
                 </div>
             {% endif %}
         </div>
-    {% elif current_user.is_authenticated and current_user.role.name == 'user' and current_user.id == event.organizer_id %}
+    {% elif current_user.is_authenticated and current_user.id == event.organizer_id %}
         <div class="event-user-registration">
             <p class="text-info">Вы являетесь организатором этого мероприятия и не можете зарегистрироваться как волонтёр.</p>
         </div>

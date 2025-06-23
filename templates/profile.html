@@ -1,15 +1,128 @@
 {% extends "base.html" %}
+
 {% block title %}Профиль{% endblock %}
 
 {% block content %}
-<div class="profile-container">
-    <h2>Профиль пользователя</h2>
-    <div class="user-card">
-        <p><strong>Логин:</strong> {{ current_user.login }}</p>
-        <p><strong>Фамилия:</strong> {{ current_user.last_name }}</p>
-        <p><strong>Имя:</strong> {{ current_user.first_name }}</p>
-        <p><strong>Отчество:</strong> {{ current_user.middle_name or '-' }}</p>
-        <p><strong>Роль:</strong> {{ current_user.role.name }}</p>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Профиль пользователя</h1>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="fas fa-user"></i> Информация о пользователе</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Имя:</strong> {{ current_user.first_name }}</p>
+                            <p><strong>Фамилия:</strong> {{ current_user.last_name }}</p>
+                            {% if current_user.middle_name %}
+                                <p><strong>Отчество:</strong> {{ current_user.middle_name }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Логин:</strong> {{ current_user.login }}</p>
+                            <p><strong>Роль:</strong> {{ current_user.role.description }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Мероприятия пользователя -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4><i class="fas fa-calendar-alt"></i> Мои мероприятия</h4>
+                    {% if current_user.role.name == 'admin' %}
+                        <a href="{{ url_for('add_event') }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-plus"></i> Добавить мероприятие
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if user_events %}
+                        <div class="row">
+                            {% for event in user_events %}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card h-100">
+                                    <img src="{{ url_for('static', filename=(event.image_filename|find_image)) }}" 
+                                         class="card-img-top" alt="{{ event.title }}" style="height: 150px; object-fit: cover;">
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ event.title }}</h6>
+                                        <p class="card-text small">
+                                            <strong>Дата:</strong> {{ event.event_date.strftime('%d.%m.%Y') }}<br>
+                                            <strong>Место:</strong> {{ event.location }}
+                                        </p>
+                                        <div class="btn-group-vertical w-100" role="group">
+                                            <a href="{{ url_for('view_event', event_id=event.id) }}" 
+                                               class="btn btn-primary btn-sm">
+                                                <i class="fas fa-eye"></i> Просмотр
+                                            </a>
+                                            {% if current_user.role.name in ['admin', 'moderator'] %}
+                                            <a href="{{ url_for('edit_event', event_id=event.id) }}" 
+                                               class="btn btn-warning btn-sm">
+                                                <i class="fas fa-edit"></i> Редактировать
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">У вас пока нет созданных мероприятий.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Заявки пользователя -->
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-clipboard-list"></i> Мои заявки на мероприятия</h4>
+                </div>
+                <div class="card-body">
+                    {% if user_registrations %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Мероприятие</th>
+                                        <th>Дата подачи</th>
+                                        <th>Статус</th>
+                                        <th>Контактная информация</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for reg in user_registrations %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('view_event', event_id=reg.event.id) }}">
+                                                {{ reg.event.title }}
+                                            </a>
+                                        </td>
+                                        <td>{{ reg.registration_date.strftime('%d.%m.%Y %H:%M') }}</td>
+                                        <td>
+                                            {% if reg.status == 'pending' %}
+                                                <span class="badge badge-warning">Ожидает рассмотрения</span>
+                                            {% elif reg.status == 'accepted' %}
+                                                <span class="badge badge-success">Подтверждена</span>
+                                            {% elif reg.status == 'rejected' %}
+                                                <span class="badge badge-danger">Отклонена</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ reg.contact_info }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">У вас пока нет заявок на мероприятия.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %} 
