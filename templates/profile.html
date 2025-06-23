@@ -64,10 +64,39 @@
                                                 <i class="fas fa-edit"></i> Редактировать
                                             </a>
                                             {% endif %}
+                                            {% if current_user.role.name == 'admin' %}
+                                            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModalProfile{{ event.id }}">
+                                                <i class="fas fa-trash"></i> Удалить
+                                            </button>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            
+                            {% if current_user.role.name == 'admin' %}
+                            <!-- Модальное окно удаления для каждого мероприятия -->
+                            <div class="modal fade" id="deleteModalProfile{{ event.id }}" tabindex="-1" aria-labelledby="deleteModalProfileLabel{{ event.id }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="deleteModalProfileLabel{{ event.id }}">Удаление мероприятия</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Вы уверены, что хотите удалить мероприятие "{{ event.title }}"?
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Нет</button>
+                                            <form method="POST" action="{{ url_for('delete_event', event_id=event.id) }}" style="display: inline;">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="btn btn-danger">Да</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
                             {% endfor %}
                         </div>
                     {% else %}
