@@ -17,10 +17,7 @@
                     </li>
                     {% if current_user.is_authenticated %}
                         <li class="nav-item">
-                            <a href="#" class="nav-link">Мероприятия</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="#" class="nav-link">Профиль</a>
+                            <a href="{{ url_for('profile') }}" class="nav-link">Профиль</a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ url_for('logout') }}" class="nav-link">Выйти</a>
@@ -55,7 +52,7 @@
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 Система волонтёрских событий. Все права защищены.</p>
+            <p>&copy; 2025 Система волонтёрских событий.<br>Поликарпов Артём Алексеевич 231-329</p>
         </div>
     </footer>
 </body>

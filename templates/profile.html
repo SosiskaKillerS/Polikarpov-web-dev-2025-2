@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <h2>Профиль пользователя</h2>
+    <div class="user-card">
+        <p><strong>Логин:</strong> {{ current_user.login }}</p>
+        <p><strong>Фамилия:</strong> {{ current_user.last_name }}</p>
+        <p><strong>Имя:</strong> {{ current_user.first_name }}</p>
+        <p><strong>Отчество:</strong> {{ current_user.middle_name or '-' }}</p>
+        <p><strong>Роль:</strong> {{ current_user.role.name }}</p>
+    </div>
+</div>
+{% endblock %} 

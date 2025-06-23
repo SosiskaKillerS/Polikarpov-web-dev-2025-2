@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}{{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="event-view">
+    <div class="event-view-header">
+        <h2>{{ event.title }}</h2>
+        {% if is_closed %}
+            <span class="badge badge-danger">Регистрация закрыта</span>
+        {% else %}
+            <span class="badge badge-success">Идёт набор волонтёров</span>
+        {% endif %}
+    </div>
+    <div class="event-view-main">
+        <div class="event-view-image">
+            <img src="{{ url_for('event_image', filename=event.image_filename) }}" alt="{{ event.title }}" style="max-width: 350px; border-radius: 10px;">
+        </div>
+        <div class="event-view-info">
+            <p><strong>Дата:</strong> {{ event.event_date.strftime('%d.%m.%Y') }}</p>
+            <p><strong>Место:</strong> {{ event.location }}</p>
+            <p><strong>Организатор:</strong> {{ event.organizer.first_name }} {{ event.organizer.last_name }}</p>
+            <p><strong>Требуется волонтёров:</strong> {{ required }}</p>
+            <p><strong>Зарегистрировано волонтёров:</strong> {{ reg_count }}</p>
+        </div>
+    </div>
+    <div class="event-view-description">
+        <h4>Описание мероприятия</h4>
+        <div class="markdown-content">{{ description_html|safe }}</div>
+    </div>
+
+    {% if current_user.is_authenticated and current_user.role.name in ['admin', 'moderator'] %}
+        <div class="event-volunteers-list">
+            <h4>Зарегистрированные волонтёры (принятые заявки)</h4>
+            {% if accepted_regs %}
+                <ul>
+                    {% for reg in accepted_regs %}
+                        <li>{{ reg.user.last_name }} {{ reg.user.first_name }} ({{ reg.contact_info }}, {{ reg.registration_date.strftime('%d.%m.%Y %H:%M') }})</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Нет принятых заявок.</p>
+            {% endif %}
+        </div>
+        <div class="event-volunteers-pending">
+            <h4>Ожидают подтверждения</h4>
+            {% if pending_regs %}
+                <ul>
+                    {% for reg in pending_regs %}
+                        <li>
+                            {{ reg.user.last_name }} {{ reg.user.first_name }} ({{ reg.contact_info }}, {{ reg.registration_date.strftime('%d.%m.%Y %H:%M') }})
+                            <form method="post" style="display:inline;">
+                                <input type="hidden" name="reg_id" value="{{ reg.id }}">
+                                <button type="submit" name="action" value="accept" class="btn btn-sm btn-success">Принять</button>
+                                <button type="submit" name="action" value="reject" class="btn btn-sm btn-danger">Отклонить</button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Нет заявок в ожидании.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if current_user.is_authenticated and current_user.role.name == 'user' %}
+        <div class="event-user-registration">
+            {% if not user_reg %}
+                {% if not is_closed %}
+                    <form method="post" action="{{ url_for('register_for_event', event_id=event.id) }}">
+                        <div class="form-group">
+                            <label for="contact_info">Контактная информация</label>
+                            <input type="text" name="contact_info" id="contact_info" class="form-control" required maxlength="255">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+                    </form>
+                {% else %}
+                    <p class="text-danger">Регистрация на это мероприятие закрыта.</p>
+                {% endif %}
+            {% else %}
+                <div class="user-reg-info">
+                    <p><strong>Ваша заявка:</strong></p>
+                    <p>Дата подачи: {{ user_reg.registration_date.strftime('%d.%m.%Y %H:%M') }}</p>
+                    <p>Статус: 
+                        {% if user_reg.status == 'pending' %}
+                            <span class="badge badge-warning">Ожидает рассмотрения</span>
+                        {% elif user_reg.status == 'accepted' %}
+                            <span class="badge badge-success">Подтверждена</span>
+                        {% elif user_reg.status == 'rejected' %}
+                            <span class="badge badge-danger">Отклонена</span>
+                        {% endif %}
+                    </p>
+                    <p>Контактная информация: {{ user_reg.contact_info }}</p>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

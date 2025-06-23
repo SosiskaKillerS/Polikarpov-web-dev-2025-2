@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -11,6 +11,11 @@ from dotenv import load_dotenv
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
+import bleach
+import markdown
+from flask import abort
+import math
+from werkzeug.utils import secure_filename
 
 # Загружаем переменные окружения
 load_dotenv()
@@ -33,20 +38,32 @@ login_manager.login_message = 'Пожалуйста, войдите, чтобы 
 login_manager.login_message_category = 'info'
 CORS(app)
 
-# Определение моделей БД
+# --- Декоратор для проверки ролей ---
+def role_required(*roles):
+    def decorator(f):
+        from functools import wraps
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated:
+                flash('Для выполнения данного действия необходимо пройти процедуру аутентификации.', 'warning')
+                return redirect(url_for('login', next=request.url))
+            if current_user.role.name not in roles:
+                flash('У вас недостаточно прав для выполнения данного действия.', 'danger')
+                return redirect(url_for('index'))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+# --- Модели (с учетом каскадных удалений и правильных связей) ---
 class Role(db.Model):
     __tablename__ = 'roles'
-    
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False, unique=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
     description = db.Column(db.Text, nullable=False)
-    
-    # Связь с пользователями
     users = db.relationship('User', backref='role', lazy=True)
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
-    
     id = db.Column(db.Integer, primary_key=True)
     login = db.Column(db.String(50), nullable=False, unique=True)
     password_hash = db.Column(db.String(255), nullable=False)
@@ -54,14 +71,11 @@ class User(db.Model, UserMixin):
     first_name = db.Column(db.String(100), nullable=False)
     middle_name = db.Column(db.String(100), nullable=True)
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'), nullable=False)
-    
-    # Связи
     organized_events = db.relationship('Event', backref='organizer', lazy=True)
-    registrations = db.relationship('VolunteerRegistration', backref='user', lazy=True)
+    registrations = db.relationship('VolunteerRegistration', backref='user', lazy=True, cascade="all, delete-orphan")
 
 class Event(db.Model):
     __tablename__ = 'events'
-    
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=False)
@@ -70,20 +84,16 @@ class Event(db.Model):
     required_volunteers = db.Column(db.Integer, nullable=False)
     image_filename = db.Column(db.String(255), nullable=False)
     organizer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    
-    # Связи
     registrations = db.relationship('VolunteerRegistration', backref='event', lazy=True, cascade="all, delete-orphan")
 
 class VolunteerRegistration(db.Model):
     __tablename__ = 'volunteer_registrations'
-    
     id = db.Column(db.Integer, primary_key=True)
     event_id = db.Column(db.Integer, db.ForeignKey('events.id', ondelete='CASCADE'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     contact_info = db.Column(db.String(255), nullable=False)
     registration_date = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), nullable=False)
     status = db.Column(db.String(20), default='pending', nullable=False)
-
     __table_args__ = (
         db.UniqueConstraint('event_id', 'user_id', name='_event_user_uc'),
         db.CheckConstraint(status.in_(['pending', 'accepted', 'rejected']), name='check_status_values')
@@ -139,10 +149,16 @@ def create_default_roles():
     
     db.session.commit()
 
-# Базовый маршрут
+# --- Главная страница с фильтрацией, пагинацией, метками, кнопками по ролям ---
 @app.route('/')
 def index():
-    return render_template('index.html')
+    page = request.args.get('page', 1, type=int)
+    today = datetime.utcnow().date()
+    events_query = Event.query.filter(Event.event_date >= today).order_by(Event.event_date.desc())
+    total_events = events_query.count()
+    per_page = 10
+    events = events_query.paginate(page=page, per_page=per_page, error_out=False)
+    return render_template('index.html', events=events.items, pagination=events, total_events=total_events)
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
@@ -203,6 +219,94 @@ def test_db():
         return jsonify({'status': 'success', 'message': 'База данных подключена успешно!'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': f'Ошибка подключения к БД: {str(e)}'})
+
+# --- Добавление мероприятия (форма и обработка) ---
+@app.route('/event/add', methods=['GET', 'POST'])
+@role_required('admin')
+def add_event():
+    # Заглушка: будет реализовано далее
+    flash('Страница добавления мероприятия в разработке.', 'info')
+    return redirect(url_for('index'))
+
+# --- Редактирование мероприятия ---
+@app.route('/event/<int:event_id>/edit', methods=['GET', 'POST'])
+@role_required('admin', 'moderator')
+def edit_event(event_id):
+    # Заглушка: будет реализовано далее
+    flash('Страница редактирования мероприятия в разработке.', 'info')
+    return redirect(url_for('index'))
+
+# --- Удаление мероприятия ---
+@app.route('/event/<int:event_id>/delete', methods=['POST'])
+@role_required('admin')
+def delete_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    try:
+        db.session.delete(event)
+        db.session.commit()
+        flash(f'Мероприятие "{event.title}" успешно удалено.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Ошибка при удалении мероприятия.', 'danger')
+    return redirect(url_for('index'))
+
+# --- Просмотр мероприятия ---
+@app.route('/event/<int:event_id>', methods=['GET', 'POST'])
+def view_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    reg_count = len([r for r in event.registrations if r.status == 'accepted'])
+    required = event.required_volunteers or 0
+    is_closed = reg_count >= required
+    # Markdown + bleach для описания
+    allowed_tags = [
+        'a', 'abbr', 'acronym', 'b', 'blockquote', 'code', 'em', 'i', 'li', 'ol', 'strong', 'ul', 'p', 'br', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'
+    ]
+    description_html = bleach.clean(markdown.markdown(event.description), tags=allowed_tags, strip=True)
+    # Список волонтёров (accepted)
+    accepted_regs = [r for r in event.registrations if r.status == 'accepted']
+    # Список заявок (pending)
+    pending_regs = [r for r in event.registrations if r.status == 'pending']
+    # Для текущего пользователя — его заявка (если есть)
+    user_reg = None
+    if current_user.is_authenticated:
+        user_reg = VolunteerRegistration.query.filter_by(event_id=event.id, user_id=current_user.id).first()
+    # Для обработки принятия/отклонения заявки (POST)
+    if request.method == 'POST' and current_user.is_authenticated and current_user.role.name in ['admin', 'moderator']:
+        reg_id = request.form.get('reg_id')
+        action = request.form.get('action')
+        reg = VolunteerRegistration.query.get(reg_id)
+        if reg and reg.status == 'pending' and reg.event_id == event.id:
+            try:
+                if action == 'accept':
+                    reg.status = 'accepted'
+                    db.session.commit()
+                    # Если набрано нужное число волонтёров — остальные pending отклонить
+                    accepted_now = VolunteerRegistration.query.filter_by(event_id=event.id, status='accepted').count()
+                    if accepted_now >= required:
+                        left = VolunteerRegistration.query.filter_by(event_id=event.id, status='pending').all()
+                        for r in left:
+                            r.status = 'rejected'
+                        db.session.commit()
+                    flash('Заявка принята.', 'success')
+                elif action == 'reject':
+                    reg.status = 'rejected'
+                    db.session.commit()
+                    flash('Заявка отклонена.', 'info')
+            except Exception as e:
+                db.session.rollback()
+                flash('Ошибка при обработке заявки.', 'danger')
+        return redirect(url_for('view_event', event_id=event.id))
+    return render_template('event_view.html', event=event, reg_count=reg_count, required=required, is_closed=is_closed, description_html=description_html, accepted_regs=accepted_regs, pending_regs=pending_regs, user_reg=user_reg)
+
+# --- Служебный маршрут для изображений (если понадобится) ---
+@app.route('/images/<filename>')
+def event_image(filename):
+    return send_from_directory('static/images', filename)
+
+@app.route('/profile')
+@login_required
+def profile():
+    return render_template('profile.html')
 
 if __name__ == '__main__':
     with app.app_context():

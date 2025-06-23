@@ -7,47 +7,62 @@
     <p>Присоединяйтесь к волонтёрскому движению и помогайте делать мир лучше!</p>
 </section>
 
-<section class="db-status-section">
-    <h3>Статус подключения к базе данных</h3>
-    <div id="db-status" class="status-card">
-        <div class="loading">Проверка подключения...</div>
+<section class="events-section">
+    <div class="events-header">
+        <h3>Ближайшие мероприятия</h3>
+        {% if current_user.is_authenticated and current_user.role.name == 'admin' %}
+            <a href="{{ url_for('add_event') }}" class="btn btn-primary">Добавить мероприятие</a>
+        {% endif %}
     </div>
-</section>
-
-{% if current_user.is_authenticated %}
-    <section class="user-info">
-        <h3>Информация о пользователе</h3>
-        <div class="user-card">
-            <p><strong>Логин:</strong> {{ current_user.login }}</p>
-            <p><strong>Имя:</strong> {{ current_user.first_name }} {{ current_user.last_name }}</p>
-            <p><strong>Роль:</strong> {{ current_user.role.name }}</p>
+    {% if events and events|length > 0 %}
+        <div class="events-list">
+            {% for event in events %}
+                {% set reg_count = event.registrations|selectattr('status', 'equalto', 'accepted')|list|length %}
+                {% set required = event.required_volunteers or 0 %}
+                <div class="event-card">
+                    <div class="event-card-header">
+                        <h4 class="event-title">{{ event.title }}</h4>
+                        {% if reg_count >= required %}
+                            <span class="badge badge-danger">Регистрация закрыта</span>
+                        {% else %}
+                            <span class="badge badge-success">Идёт набор волонтёров</span>
+                        {% endif %}
+                    </div>
+                    <p class="event-date"><strong>Дата:</strong> {{ event.event_date.strftime('%d.%m.%Y') }}</p>
+                    <p class="event-location"><strong>Место:</strong> {{ event.location }}</p>
+                    <p class="event-organizer"><strong>Организатор:</strong> {{ event.organizer.first_name }} {{ event.organizer.last_name }}</p>
+                    <p class="event-volunteers"><strong>Зарегистрировано волонтёров:</strong> {{ reg_count }} / {{ required }}</p>
+                    <div class="event-actions">
+                        <a href="{{ url_for('view_event', event_id=event.id) }}" class="btn btn-sm btn-info">Просмотр</a>
+                        {% if current_user.is_authenticated and current_user.role.name in ['admin', 'moderator'] %}
+                            <a href="{{ url_for('edit_event', event_id=event.id) }}" class="btn btn-sm btn-warning">Редактировать</a>
+                        {% endif %}
+                        {% if current_user.is_authenticated and current_user.role.name == 'admin' %}
+                            <form method="POST" action="{{ url_for('delete_event', event_id=event.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Вы уверены, что хотите удалить мероприятие {{ event.title }}?');">Удалить</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
         </div>
-    </section>
-{% endif %}
-
-<script>
-    // Функция для проверки статуса БД
-    function checkDatabase() {
-        const statusDiv = document.getElementById('db-status');
-        statusDiv.innerHTML = '<div class="loading">Проверка подключения...</div>';
-        
-        fetch('/test_db')
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    statusDiv.innerHTML = '<div class="success">✅ ' + data.message + '</div>';
-                } else {
-                    statusDiv.innerHTML = '<div class="error">❌ ' + data.message + '</div>';
-                }
-            })
-            .catch(error => {
-                statusDiv.innerHTML = '<div class="error">❌ Ошибка подключения: ' + error.message + '</div>';
-            });
-    }
-
-    // Автоматическая проверка при загрузке страницы
-    document.addEventListener('DOMContentLoaded', function() {
-        checkDatabase();
-    });
-</script>
+        {% if pagination.pages > 1 %}
+        <nav class="pagination-nav">
+            <ul class="pagination">
+                {% if pagination.has_prev %}
+                    <li><a href="{{ url_for('index', page=pagination.prev_num) }}">&laquo; Назад</a></li>
+                {% endif %}
+                {% for p in range(1, pagination.pages + 1) %}
+                    <li class="{% if p == pagination.page %}active{% endif %}"><a href="{{ url_for('index', page=p) }}">{{ p }}</a></li>
+                {% endfor %}
+                {% if pagination.has_next %}
+                    <li><a href="{{ url_for('index', page=pagination.next_num) }}">Вперёд &raquo;</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    {% else %}
+        <p>Пока нет запланированных мероприятий.</p>
+    {% endif %}
+</section>
 {% endblock %} 
