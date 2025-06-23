@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+    <h2>Добро пожаловать в систему волонтёрских событий</h2>
+    <p>Присоединяйтесь к волонтёрскому движению и помогайте делать мир лучше!</p>
+</section>
+
+<section class="db-status-section">
+    <h3>Статус подключения к базе данных</h3>
+    <div id="db-status" class="status-card">
+        <div class="loading">Проверка подключения...</div>
+    </div>
+</section>
+
+{% if current_user.is_authenticated %}
+    <section class="user-info">
+        <h3>Информация о пользователе</h3>
+        <div class="user-card">
+            <p><strong>Логин:</strong> {{ current_user.login }}</p>
+            <p><strong>Имя:</strong> {{ current_user.first_name }} {{ current_user.last_name }}</p>
+            <p><strong>Роль:</strong> {{ current_user.role.name }}</p>
+        </div>
+    </section>
+{% endif %}
+
+<script>
+    // Функция для проверки статуса БД
+    function checkDatabase() {
+        const statusDiv = document.getElementById('db-status');
+        statusDiv.innerHTML = '<div class="loading">Проверка подключения...</div>';
+        
+        fetch('/test_db')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    statusDiv.innerHTML = '<div class="success">✅ ' + data.message + '</div>';
+                } else {
+                    statusDiv.innerHTML = '<div class="error">❌ ' + data.message + '</div>';
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = '<div class="error">❌ Ошибка подключения: ' + error.message + '</div>';
+            });
+    }
+
+    // Автоматическая проверка при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        checkDatabase();
+    });
+</script>
+{% endblock %} 

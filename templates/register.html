@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Регистрация{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-form-wrapper">
+        <h2 class="auth-title">Создать аккаунт</h2>
+        <form method="POST" action="{{ url_for('register') }}">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group-fieldset">
+                <div class="form-group">
+                    {{ form.login.label(class="form-label") }}
+                    {{ form.login(class="form-control form-control-lg") }}
+                    {% if form.login.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.login.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="form-row">
+                    <div class="form-group col">
+                        {{ form.first_name.label(class="form-label") }}
+                        {{ form.first_name(class="form-control form-control-lg") }}
+                    </div>
+                    <div class="form-group col">
+                        {{ form.last_name.label(class="form-label") }}
+                        {{ form.last_name(class="form-control form-control-lg") }}
+                    </div>
+                </div>
+                <div class="form-group">
+                    {{ form.middle_name.label(class="form-label") }}
+                    {{ form.middle_name(class="form-control form-control-lg") }}
+                </div>
+                <div class="form-group">
+                    {{ form.password.label(class="form-label") }}
+                    {{ form.password(class="form-control form-control-lg") }}
+                     {% if form.password.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.password.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.confirm_password.label(class="form-label") }}
+                    {{ form.confirm_password(class="form-control form-control-lg") }}
+                     {% if form.confirm_password.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.confirm_password.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </fieldset>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-primary btn-block") }}
+            </div>
+        </form>
+        <div class="auth-bottom-link">
+            <small>
+                Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a>
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %} 
