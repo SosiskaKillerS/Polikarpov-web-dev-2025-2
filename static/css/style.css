@@ -10,13 +10,13 @@ html, body {
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
-    color: #333;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background: #e6eaf0;
 }
 
 /* Навигация */
@@ -477,4 +477,21 @@ body {
 .pagination a:hover {
     background: #667eea;
     color: #fff;
+}
+
+.contact-input {
+    border: 1.5px solid #b0b0b0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 1.08rem;
+    background: #f7f7fa;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    margin-bottom: 10px;
+}
+.contact-input:focus {
+    border-color: #4a90e2;
+    outline: none;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(74,144,226,0.08);
 } 

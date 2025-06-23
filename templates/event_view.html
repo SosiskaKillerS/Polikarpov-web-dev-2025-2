@@ -62,14 +62,14 @@
         </div>
     {% endif %}
 
-    {% if current_user.is_authenticated and current_user.role.name == 'user' %}
+    {% if current_user.is_authenticated and current_user.role.name == 'user' and current_user.id != event.organizer_id %}
         <div class="event-user-registration">
             {% if not user_reg %}
                 {% if not is_closed %}
                     <form method="post" action="{{ url_for('register_for_event', event_id=event.id) }}">
                         <div class="form-group">
                             <label for="contact_info">Контактная информация</label>
-                            <input type="text" name="contact_info" id="contact_info" class="form-control" required maxlength="255">
+                            <input type="text" name="contact_info" id="contact_info" class="form-control contact-input" required maxlength="255" placeholder="Телефон, email или соцсеть">
                         </div>
                         <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
                     </form>
@@ -92,6 +92,10 @@
                     <p>Контактная информация: {{ user_reg.contact_info }}</p>
                 </div>
             {% endif %}
+        </div>
+    {% elif current_user.is_authenticated and current_user.role.name == 'user' and current_user.id == event.organizer_id %}
+        <div class="event-user-registration">
+            <p class="text-info">Вы являетесь организатором этого мероприятия и не можете зарегистрироваться как волонтёр.</p>
         </div>
     {% endif %}
 </div>
