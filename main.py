@@ -297,6 +297,7 @@ def add_event():
                 os.makedirs(upload_folder, exist_ok=True)
                 file_path = os.path.join(upload_folder, image_filename)
                 form.image.data.save(file_path)
+                print(f"Новое изображение сохранено: {file_path}")
             
             # Создаем мероприятие
             event = Event(
@@ -341,9 +342,28 @@ def edit_event(event_id):
     
     if form.validate_on_submit():
         try:
+            # Проверяем, нужно ли удалить изображение
+            remove_image = request.form.get('remove_image') == 'on'
+            
+            if remove_image:
+                # Удаляем старое изображение
+                upload_folder = os.path.join(app.root_path, 'static', 'images')
+                old_image_path = os.path.join(upload_folder, event.image_filename)
+                if (event.image_filename != 'default' and 
+                    event.image_filename != 'no-image.svg' and 
+                    os.path.exists(old_image_path)):
+                    try:
+                        os.remove(old_image_path)
+                        print(f"Изображение удалено по запросу пользователя: {old_image_path}")
+                    except Exception as e:
+                        print(f"Ошибка при удалении изображения: {e}")
+                
+                # Устанавливаем изображение по умолчанию
+                event.image_filename = 'default'
+            
             # Обрабатываем новое изображение, если загружено
-            if form.image.data and form.image.data.filename:
-                # Сохраняем новый файл
+            elif form.image.data and form.image.data.filename:
+                # Сохраняем новое изображение
                 filename = secure_filename(form.image.data.filename)
                 name, ext = os.path.splitext(filename)
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -354,6 +374,17 @@ def edit_event(event_id):
                 os.makedirs(upload_folder, exist_ok=True)
                 file_path = os.path.join(upload_folder, image_filename)
                 form.image.data.save(file_path)
+                
+                # Удаляем старое изображение, если оно существует и не является изображением по умолчанию
+                old_image_path = os.path.join(upload_folder, event.image_filename)
+                if (event.image_filename != 'default' and 
+                    event.image_filename != 'no-image.svg' and 
+                    os.path.exists(old_image_path)):
+                    try:
+                        os.remove(old_image_path)
+                        print(f"Старое изображение удалено: {old_image_path}")
+                    except Exception as e:
+                        print(f"Ошибка при удалении старого изображения: {e}")
                 
                 # Обновляем имя файла в базе
                 event.image_filename = image_filename
@@ -372,6 +403,7 @@ def edit_event(event_id):
             
         except Exception as e:
             db.session.rollback()
+            print(f"Ошибка при обновлении мероприятия: {str(e)}")
             flash('При сохранении данных возникла ошибка. Проверьте корректность введённых данных.', 'danger')
     
     return render_template('event_form.html', form=form, title='Редактировать мероприятие', is_edit=True, event=event)
