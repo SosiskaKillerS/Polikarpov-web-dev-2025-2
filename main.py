@@ -10,8 +10,8 @@ import os
 from dotenv import load_dotenv
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField
-from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, DateField, FileField, IntegerField
+from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Optional
 import bleach
 import markdown
 from flask import abort
@@ -136,28 +136,32 @@ class EventForm(FlaskForm):
     description = TextAreaField('Описание мероприятия', 
                                 validators=[DataRequired(), Length(min=10)], 
                                 render_kw={'required': False, 'minlength': None})
-    event_date = StringField('Дата мероприятия (ДД.ММ.ГГГГ)', 
+    event_date = DateField('Дата мероприятия', 
                              validators=[DataRequired()])
     location = StringField('Место проведения', 
                            validators=[DataRequired(), Length(min=3, max=255)])
-    required_volunteers = StringField('Требуемое количество волонтёров', 
+    required_volunteers = IntegerField('Требуемое количество волонтёров', 
                                       validators=[DataRequired()])
-    image = StringField('Изображение (необязательно)')
+    image = FileField('Изображение (необязательно)', validators=[Optional()])
     submit = SubmitField('Сохранить')
 
-    def validate_event_date(self, event_date):
-        try:
-            datetime.strptime(event_date.data, '%d.%m.%Y')
-        except ValueError:
-            raise ValidationError('Неверный формат даты. Используйте формат ДД.ММ.ГГГГ (например: 25.12.2025)')
-
     def validate_required_volunteers(self, required_volunteers):
-        try:
-            volunteers = int(required_volunteers.data)
-            if volunteers <= 0:
-                raise ValueError()
-        except ValueError:
+        if required_volunteers.data <= 0:
             raise ValidationError('Количество волонтёров должно быть положительным числом')
+
+    def validate_image(self, image):
+        if image.data and image.data.filename:
+            # Проверяем расширение файла
+            allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'}
+            file_extension = image.data.filename.rsplit('.', 1)[1].lower() if '.' in image.data.filename else ''
+            if file_extension not in allowed_extensions:
+                raise ValidationError('Разрешены только файлы изображений: PNG, JPG, JPEG, GIF, WEBP, SVG')
+            
+            # Проверяем размер файла (максимум 5MB)
+            if len(image.data.read()) > 5 * 1024 * 1024:
+                image.data.seek(0)  # Сбрасываем указатель файла
+                raise ValidationError('Размер файла не должен превышать 5MB')
+            image.data.seek(0)  # Сбрасываем указатель файла
 
 # Функция для загрузки пользователя
 @login_manager.user_loader
@@ -278,21 +282,29 @@ def add_event():
     
     if form.validate_on_submit():
         try:
-            # Парсим дату
-            event_date = datetime.strptime(form.event_date.data, '%d.%m.%Y').date()
-            
             # Обрабатываем изображение
             image_filename = 'default'
-            if form.image.data and form.image.data.strip():
-                image_filename = form.image.data.strip()
+            if form.image.data and form.image.data.filename:
+                # Сохраняем файл
+                filename = secure_filename(form.image.data.filename)
+                # Создаем уникальное имя файла
+                name, ext = os.path.splitext(filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                image_filename = f"{name}_{timestamp}{ext}"
+                
+                # Сохраняем файл в папку static/images
+                upload_folder = os.path.join(app.root_path, 'static', 'images')
+                os.makedirs(upload_folder, exist_ok=True)
+                file_path = os.path.join(upload_folder, image_filename)
+                form.image.data.save(file_path)
             
             # Создаем мероприятие
             event = Event(
                 title=form.title.data,
                 description=form.description.data,
-                event_date=event_date,
+                event_date=form.event_date.data,
                 location=form.location.data,
-                required_volunteers=int(form.required_volunteers.data),
+                required_volunteers=form.required_volunteers.data,
                 image_filename=image_filename,
                 organizer_id=current_user.id
             )
@@ -323,22 +335,35 @@ def edit_event(event_id):
     if request.method == 'GET':
         form.title.data = event.title
         form.description.data = event.description
-        form.event_date.data = event.event_date.strftime('%d.%m.%Y')
+        form.event_date.data = event.event_date
         form.location.data = event.location
-        form.required_volunteers.data = str(event.required_volunteers)
-        form.image.data = event.image_filename
+        form.required_volunteers.data = event.required_volunteers
     
     if form.validate_on_submit():
         try:
-            # Парсим дату
-            event_date = datetime.strptime(form.event_date.data, '%d.%m.%Y').date()
+            # Обрабатываем новое изображение, если загружено
+            if form.image.data and form.image.data.filename:
+                # Сохраняем новый файл
+                filename = secure_filename(form.image.data.filename)
+                name, ext = os.path.splitext(filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                image_filename = f"{name}_{timestamp}{ext}"
+                
+                # Сохраняем файл в папку static/images
+                upload_folder = os.path.join(app.root_path, 'static', 'images')
+                os.makedirs(upload_folder, exist_ok=True)
+                file_path = os.path.join(upload_folder, image_filename)
+                form.image.data.save(file_path)
+                
+                # Обновляем имя файла в базе
+                event.image_filename = image_filename
             
             # Обновляем данные мероприятия
             event.title = form.title.data
             event.description = form.description.data
-            event.event_date = event_date
+            event.event_date = form.event_date.data
             event.location = form.location.data
-            event.required_volunteers = int(form.required_volunteers.data)
+            event.required_volunteers = form.required_volunteers.data
             
             db.session.commit()
             
@@ -433,13 +458,22 @@ def profile():
     return render_template('profile.html', user_events=user_events, user_registrations=user_registrations)
 
 @app.template_filter('find_image')
-def find_image(image_basename):
+def find_image(image_filename):
     static_folder = os.path.join(app.root_path, 'static', 'images')
-    for ext in ['.jpg', '.jpeg', '.png', '.webp']:
-        candidate = image_basename + ext
+    
+    # Если имя файла уже содержит расширение
+    if '.' in image_filename:
+        file_path = os.path.join(static_folder, image_filename)
+        if os.path.isfile(file_path):
+            return 'images/' + image_filename
+    
+    # Если имя файла без расширения, ищем по расширениям
+    for ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg']:
+        candidate = image_filename + ext
         if os.path.isfile(os.path.join(static_folder, candidate)):
             return 'images/' + candidate
-    return 'images/no-image.png'
+    
+    return 'images/no-image.svg'
 
 @app.route('/event/<int:event_id>/register', methods=['POST'])
 @login_required
