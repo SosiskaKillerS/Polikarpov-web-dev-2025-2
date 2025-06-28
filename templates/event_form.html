@@ -6,57 +6,6 @@
 <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
 <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
 <style>
-    .file-upload-wrapper {
-        position: relative;
-        display: inline-block;
-        width: 100%;
-    }
-    
-    .file-upload-wrapper input[type=file] {
-        position: absolute;
-        left: -9999px;
-    }
-    
-    .file-upload-label {
-        display: block;
-        padding: 12px 20px;
-        background: #f8f9fa;
-        border: 2px dashed #dee2e6;
-        border-radius: 8px;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        margin-bottom: 10px;
-    }
-    
-    .file-upload-label:hover {
-        border-color: #007bff;
-        background: #e3f2fd;
-    }
-    
-    .file-upload-label i {
-        font-size: 2rem;
-        color: #6c757d;
-        margin-bottom: 10px;
-        display: block;
-    }
-    
-    .file-preview {
-        max-width: 200px;
-        max-height: 200px;
-        border-radius: 8px;
-        margin-top: 10px;
-        display: none;
-    }
-    
-    .file-info {
-        margin-top: 10px;
-        padding: 10px;
-        background: #e9ecef;
-        border-radius: 5px;
-        font-size: 0.9rem;
-    }
-    
     .date-input-wrapper {
         position: relative;
     }
@@ -174,26 +123,7 @@
                         {% if not is_edit %}
                         <div class="form-group mt-3">
                             {{ form.image.label(class="form-label") }}
-                            <div class="file-upload-wrapper">
-                                <label for="{{ form.image.id }}" class="file-upload-label">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <span class="upload-text">Нажмите для выбора изображения</span>
-                                    <br>
-                                    <small class="text-muted">или перетащите файл сюда</small>
-                                </label>
-                                {{ form.image(class="form-control", style="display: none;") }}
-                            </div>
-                            
-                            <!-- Предпросмотр изображения -->
-                            <img id="image-preview" class="file-preview" alt="Предпросмотр">
-                            
-                            <!-- Информация о файле -->
-                            <div id="file-info" class="file-info" style="display: none;">
-                                <strong>Выбранный файл:</strong> <span id="file-name"></span><br>
-                                <strong>Размер:</strong> <span id="file-size"></span><br>
-                                <strong>Тип:</strong> <span id="file-type"></span>
-                            </div>
-                            
+                            {{ form.image(class="form-control") }}
                             {% if form.image.errors %}
                                 <div class="text-danger">
                                     {% for error in form.image.errors %}
@@ -231,81 +161,6 @@ document.addEventListener('DOMContentLoaded', function() {
             'guide'
         ]
     });
-
-    // Обработка загрузки файлов
-    const fileInput = document.getElementById('{{ form.image.id }}');
-    const uploadLabel = document.querySelector('.file-upload-label');
-    const uploadText = document.querySelector('.upload-text');
-    const imagePreview = document.getElementById('image-preview');
-    const fileInfo = document.getElementById('file-info');
-    const fileName = document.getElementById('file-name');
-    const fileSize = document.getElementById('file-size');
-    const fileType = document.getElementById('file-type');
-
-    if (fileInput) {
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                // Обновляем текст
-                uploadText.textContent = file.name;
-                
-                // Показываем информацию о файле
-                fileName.textContent = file.name;
-                fileSize.textContent = formatFileSize(file.size);
-                fileType.textContent = file.type;
-                fileInfo.style.display = 'block';
-                
-                // Показываем предпросмотр для изображений
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        imagePreview.src = e.target.result;
-                        imagePreview.style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
-                }
-            } else {
-                // Сбрасываем отображение
-                uploadText.textContent = 'Нажмите для выбора изображения';
-                imagePreview.style.display = 'none';
-                fileInfo.style.display = 'none';
-            }
-        });
-
-        // Drag and drop функциональность
-        uploadLabel.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            uploadLabel.style.borderColor = '#007bff';
-            uploadLabel.style.background = '#e3f2fd';
-        });
-
-        uploadLabel.addEventListener('dragleave', function(e) {
-            e.preventDefault();
-            uploadLabel.style.borderColor = '#dee2e6';
-            uploadLabel.style.background = '#f8f9fa';
-        });
-
-        uploadLabel.addEventListener('drop', function(e) {
-            e.preventDefault();
-            uploadLabel.style.borderColor = '#dee2e6';
-            uploadLabel.style.background = '#f8f9fa';
-            
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                fileInput.files = files;
-                fileInput.dispatchEvent(new Event('change'));
-            }
-        });
-    }
-
-    // Функция форматирования размера файла
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
 
     // Устанавливаем минимальную дату (сегодня)
     const dateInput = document.querySelector('input[type="date"]');
