@@ -1,0 +1,8 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#f8f9fa"/>
+  <rect x="50" y="50" width="300" height="200" fill="#e9ecef" stroke="#dee2e6" stroke-width="2"/>
+  <circle cx="200" cy="120" r="30" fill="#6c757d"/>
+  <rect x="120" y="170" width="160" height="20" fill="#6c757d" rx="10"/>
+  <rect x="140" y="200" width="120" height="15" fill="#6c757d" rx="7"/>
+  <text x="200" y="250" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#6c757d">Изображение не найдено</text>
+</svg> 

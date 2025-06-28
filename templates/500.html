@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Ошибка сервера{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <h1 class="display-1 text-danger">500</h1>
+            <h2>Ошибка сервера</h2>
+            <p class="lead">Произошла внутренняя ошибка сервера. Пожалуйста, попробуйте позже.</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                <i class="fas fa-home"></i> Вернуться на главную
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

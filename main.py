@@ -380,15 +380,28 @@ def edit_event(event_id):
 @app.route('/event/<int:event_id>/delete', methods=['POST'])
 @role_required('admin')
 def delete_event(event_id):
-    event = Event.query.get_or_404(event_id)
     try:
+        event = Event.query.get_or_404(event_id)
+        event_title = event.title  # Сохраняем название для сообщения
+        
+        # Удаляем событие
         db.session.delete(event)
         db.session.commit()
-        flash(f'Мероприятие "{event.title}" успешно удалено.', 'success')
+        
+        flash(f'Мероприятие "{event_title}" успешно удалено.', 'success')
+        print(f"Мероприятие {event_id} успешно удалено")
+        
     except Exception as e:
         db.session.rollback()
+        print(f"Ошибка при удалении мероприятия {event_id}: {str(e)}")
         flash('Ошибка при удалении мероприятия.', 'danger')
-    return redirect(url_for('index'))
+    
+    # Перенаправляем на главную страницу с дополнительными заголовками
+    response = redirect(url_for('index'))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 # --- Просмотр мероприятия ---
 @app.route('/event/<int:event_id>', methods=['GET', 'POST'])
@@ -506,6 +519,16 @@ def register_for_event(event_id):
         db.session.rollback()
         flash('Ошибка при отправке заявки.', 'danger')
     return redirect(url_for('view_event', event_id=event_id))
+
+# --- Обработчики ошибок ---
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('500.html'), 500
 
 if __name__ == '__main__':
     with app.app_context():

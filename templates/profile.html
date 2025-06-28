@@ -88,7 +88,7 @@
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Нет</button>
-                                            <form method="POST" action="{{ url_for('delete_event', event_id=event.id) }}" style="display: inline;">
+                                            <form method="POST" action="{{ url_for('delete_event', event_id=event.id) }}" style="display: inline;" class="delete-form">
                                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="btn btn-danger">Да</button>
                                             </form>
@@ -154,4 +154,23 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработка форм удаления
+    const deleteForms = document.querySelectorAll('.delete-form');
+    deleteForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            // Закрываем модальное окно перед отправкой формы
+            const modal = this.closest('.modal');
+            if (modal) {
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+        });
+    });
+});
+</script>
 {% endblock %} 
